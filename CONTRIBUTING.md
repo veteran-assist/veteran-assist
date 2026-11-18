@@ -2,6 +2,8 @@
 
 **AI agents and anyone doing a review or fact-check: read [AGENTS.md](AGENTS.md) first.** It has the full method, the places a fact hides, the mistakes already made, and how to report. This file is the short version.
 
+**Publishing identity, before anything else.** This repository is public. The only allowed Git author and committer is `Veteran Assist <358109600+veteran-assist@users.noreply.github.com>`. Do not commit a personal name or email, and do not write one into a file to warn about it. Do not push, open a pull request, or merge while signed in as a personal GitHub account: that account's username is then public. If that is the only access you have, stop and tell the owner. Do not connect this repository to a host. The full rule is at the top of AGENTS.md.
+
 For anyone changing this repo, human or AI. The site is read by veterans and checked by DVA staff, so a wrong figure does real harm.
 
 ## How changes get in
@@ -9,7 +11,7 @@ For anyone changing this repo, human or AI. The site is read by veterans and che
 1. Pull the latest `main` first. Make a branch. Never push to `main` directly.
 2. Open a pull request. CI must pass (`checks`: lint, types, tests). `links` runs weekly and on PRs.
 3. One topic per pull request. Say what changed and which official page each fact came from.
-4. A push to `main` without a pull request fails the "Direct push alarm" run and emails the person who pushed. This repo is private on the free plan, so GitHub cannot block the push. The alarm is how it is noticed.
+4. This repository is public. Read "Publishing identity" in AGENTS.md before you push or open a pull request. A personal GitHub account must not be the one that does either.
 
 ## Facts
 

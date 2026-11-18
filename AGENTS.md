@@ -8,6 +8,21 @@ The aim of this file is that you find problems the way a careful reviewer would,
 
 ---
 
+## Publishing identity
+
+This repository is public. The publisher is not named. Read this before any commit, pull request, or hosting change. If it conflicts with "pull requests only" below, this section wins.
+
+- The only allowed Git author and committer is `Veteran Assist <358109600+veteran-assist@users.noreply.github.com>`. Set both name and email to that before you commit. Then run `git log --format='%an <%ae> | %cn <%ce>'` and stop if any other name or email appears.
+- Do not commit a personal name, a personal email, a Gmail address, or a GitHub noreply address that contains a personal username. Do not write any of those into a file, a commit message, a workflow, or this document. Do not add them in order to warn about them.
+- Do not use the GitHub website editor while signed in as a personal account. GitHub records that account on the commit.
+- Do not open a pull request, push, or merge while authenticated as a personal GitHub account. The pull request author, the Actions run, and the push event show that username to anyone. If that is the only access you have, stop and tell the owner. Do not push "just this once".
+- Do not import, rebase onto, or push history from any other repository. This history starts at one commit. Add new commits on top of it only.
+- Do not connect this repository to Vercel, Neon, or any other host. The live site deploys from a separate private repository. A connection writes the hosting account name into public commit checks. Do not create or pay for a hosting team to get around this.
+- Do not add a legal name, a billing email, a domain registration record, or an account username to the site or the repository.
+- If you find any of those already present, do not copy them into a new file. Say so and stop.
+
+---
+
 ## 1. The six rules that matter most
 
 1. **Pull requests only. Never push to `main`.** Pull the latest `main`, make a branch, open a pull request, wait for CI. A direct push fails the "Direct push alarm" and emails the person who pushed. Seven direct pushes on 26 and 29 October 2026 shipped a dead form link and a broken regex because no check ran on them.
@@ -125,7 +140,7 @@ Check all of these surfaces for the same fact: guides, `deadlines.ts`, `glossary
 
 - Run `npm run lint`, `npm run typecheck`, `npm test`. If you cannot install dependencies, say so; CI will run them.
 - A bug that slipped through means a test was missing. Add one in `scripts/` (see `forms.test.mjs`, `freshness.test.mjs` for the pattern). Example: the form-linking regex broke on 29 October and nothing tested it.
-- Open the pull request (section 5). Open the Vercel preview and look at it (section 7). After the merge, look at the live site (section 8).
+- There is no hosting preview on this public repository. Do not connect one. Check locally, or say that you did not look at a preview. See "Publishing identity" above.
 
 ---
 
@@ -168,7 +183,7 @@ These are here so you do not repeat them. They can change. Re-open the official 
 
 ## 8. Checking your work for real
 
-1. **Preview:** open the Vercel preview for your pull request. Look at every page you changed, at phone width and desktop width. Say what you looked at.
+1. **Preview:** this public repository has no hosting preview. Do not connect Vercel or any other host to get one (see "Publishing identity"). Check the pages you can run locally, at phone width and desktop width, and say what you looked at. If you could not run it, say that.
 2. **After the merge:** the live site can show an old cached page for a while. Add a cache-buster (`?v=2`) when you look. Confirm the change is live, not just merged.
 3. **For a full site check:** every guide, letter, playbook and static page loads. A nonexistent address shows the "Page not found" page. External links: CI's `links` run shows broken links and lists the ones needing a manual look. Console errors. Phone layout of the pages you touched. Report which of these you did and which you did not.
    A full-spectrum check also runs every week as a scheduled task (Mondays, Sydney time). It reads the live site, tries the calculators, compares the privacy page with the code, scans for advice-style wording, and re-reads the sources in `source-watch.ts`. It opens a pull request only for facts the official pages changed (branch `watch/YYYY-MM-DD`); everything else it reports to the owner. Review its pull requests like any other (section 5).

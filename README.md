@@ -20,14 +20,9 @@ Local dev needs no environment variables. Without `DATABASE_URL` the dev server 
 embedded PGLite database (data is lost on restart). That fallback exists only in dev: a
 production build has it removed.
 
-## Deploying on Vercel
+## Deploying
 
-The project `veteran-assist` is linked to this repository. Production is
-[https://veteran-assist-one.vercel.app](https://veteran-assist-one.vercel.app).
-Live at [https://veteranassist.au](https://veteranassist.au) since 20 October 2026.
-`www.veteranassist.au` redirects to the apex (308). DNS is VentraIP DNS Hosting: apex `A`
-`76.76.21.21`, `www` `CNAME` `cname.vercel-dns.com`. `VITE_PUBLIC_HOSTNAME` is set to
-`veteranassist.au` on Production.
+Do not connect this public repository to Vercel, Neon, or any other host. The live site deploys from a separate private copy. A connection writes the hosting account name into public commit checks. Live site: [https://veteranassist.au](https://veteranassist.au). See "Publishing identity" in [AGENTS.md](AGENTS.md).
 
 Vercel Web Analytics (anonymous page views, no cookies) is loaded in production from
 `src/routes/__root.tsx`; query strings are stripped before sending. It must be enabled in the
