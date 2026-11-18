@@ -3,7 +3,7 @@ import { describe, test } from "node:test";
 import { readFileSync } from "node:fs";
 import { contentSecurityPolicy, HSTS_VALUE } from "../server/csp.mjs";
 import { currentCspNonce, runWithCspNonce } from "../server/csp-nonce.mjs";
-import privacyHeaders from "../server/middleware/privacy-headers.ts";
+import privacyHeaders, { wwwToApexRedirect } from "../server/middleware/privacy-headers.ts";
 import { readCspNonce } from "../src/lib/csp-nonce.ts";
 
 const read = (path) => readFileSync(new URL(`../${path}`, import.meta.url), "utf8");
@@ -73,6 +73,42 @@ describe("content security policy", { concurrency: false }, () => {
     );
     assert.equal(res.headers.get("content-security-policy-report-only"), null);
     assert.equal(await res.text(), `<script nonce="${seen}"></script>`);
+  });
+
+  test("www redirects to the apex and the redirect carries the preload header", async () => {
+    let called = false;
+    const event = {
+      url: new URL("https://www.veteranassist.au/guides/delays?x=1"),
+      req: { headers: new Headers({ host: "www.veteranassist.au" }) },
+    };
+    const res = await privacyHeaders(event, async () => {
+      called = true;
+      return new Response("nope");
+    });
+    assert.equal(called, false);
+    assert.equal(res.status, 308);
+    assert.equal(res.headers.get("location"), "https://veteranassist.au/guides/delays?x=1");
+    assert.equal(
+      res.headers.get("strict-transport-security"),
+      "max-age=63072000; includeSubDomains; preload",
+    );
+    assert.match(res.headers.get("content-security-policy"), /script-src 'self' 'nonce-/);
+  });
+
+  test("the apex and any other host are not redirected", () => {
+    assert.equal(wwwToApexRedirect({ url: new URL("https://veteranassist.au/") }), null);
+    assert.equal(
+      wwwToApexRedirect({
+        url: new URL("https://example.com/"),
+        req: { headers: new Headers({ "x-forwarded-host": "example.com" }) },
+      }),
+      null,
+    );
+    const forwarded = wwwToApexRedirect({
+      url: new URL("https://internal/call-sheet"),
+      req: { headers: new Headers({ "x-forwarded-host": "www.veteranassist.au" }) },
+    });
+    assert.equal(forwarded?.headers.get("location"), "https://veteranassist.au/call-sheet");
   });
 
   test("CSP_REPORT_ONLY moves the policy and does not enforce it", async () => {

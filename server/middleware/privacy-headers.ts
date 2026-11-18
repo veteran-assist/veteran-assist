@@ -14,12 +14,16 @@
  *
  * HSTS carries the preload token. Serving it does not add the domain to the
  * browser preload list. That is a separate submission, and removal takes months.
+ * www.veteranassist.au is answered here, not by a Vercel domain redirect,
+ * so the 308 itself carries this header. The preload list requires that.
  *
  * To roll back to report-only without a code change, set CSP_REPORT_ONLY=1
  * in the Vercel project settings.
  */
 import { HSTS_VALUE, contentSecurityPolicy } from "../csp.mjs";
 import { currentCspNonce, runWithCspNonce } from "../csp-nonce.mjs";
+
+const APEX = "veteranassist.au";
 
 const HEADERS: Record<string, string> = {
   "referrer-policy": "no-referrer",
@@ -31,12 +35,37 @@ const HEADERS: Record<string, string> = {
   "strict-transport-security": HSTS_VALUE,
 };
 
+interface HeaderEvent {
+  url?: URL;
+  req?: { headers?: { get(name: string): string | null } };
+}
+
+function requestHost(event: HeaderEvent | null | undefined): string {
+  const headers = event?.req?.headers;
+  const raw =
+    headers?.get("x-forwarded-host") ?? headers?.get("host") ?? event?.url?.host ?? "";
+  return raw.split(",")[0].trim().toLowerCase().replace(/:\d+$/, "");
+}
+
+/** 308 from www to the apex, keeping the path and query. Null for every other host. */
+export function wwwToApexRedirect(event: HeaderEvent | null | undefined): Response | null {
+  if (requestHost(event) !== `www.${APEX}`) return null;
+  const path = event?.url?.pathname ?? "/";
+  if (!path.startsWith("/") || path.startsWith("//")) return null;
+  const search = event?.url?.search ?? "";
+  return new Response(null, {
+    status: 308,
+    headers: { location: `https://${APEX}${path}${search}` },
+  });
+}
+
 export default async function privacyHeadersMiddleware(
-  _event: unknown,
+  event: HeaderEvent | null | undefined,
   next: () => Promise<unknown>,
 ) {
   return runWithCspNonce(async () => {
-    const result = await next();
+    const redirect = wwwToApexRedirect(event);
+    const result = redirect ?? (await next());
     if (!(result instanceof Response)) return result;
     const headers = new Headers(result.headers);
     for (const [key, value] of Object.entries(HEADERS)) {
