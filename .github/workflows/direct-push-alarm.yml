@@ -1,0 +1,31 @@
+name: Direct push alarm
+
+# Branch protection cannot be enforced on a private repository on the free plan, so this is
+# an alarm, not a lock. When a commit lands on main without a pull request, this run fails
+# and GitHub emails the person who pushed. It does not undo the push.
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+  pull-requests: read
+
+jobs:
+  came-from-a-pull-request:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Check the newest commit belongs to a pull request
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          SHA: ${{ github.sha }}
+        run: |
+          count="$(gh api "repos/${REPO}/commits/${SHA}/pulls" --jq 'length')"
+          echo "Pull requests linked to ${SHA}: ${count}"
+          if [ "${count}" -eq 0 ]; then
+            echo "::error title=Direct push to main::Commit ${SHA} reached main without a pull request. Open a branch and a PR next time. See CONTRIBUTING.md."
+            exit 1
+          fi

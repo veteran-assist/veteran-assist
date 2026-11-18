@@ -1,0 +1,122 @@
+#!/usr/bin/env node
+/**
+ * Deploy-time database migrator (node-postgres, `pg`).
+ *
+ * Runs during `npm run build` — on every Vercel deploy — applying pending files
+ * in ../migrations to DATABASE_URL. Each file is applied in one transaction and
+ * recorded in a `_migrations` table, so it runs once and is safe to re-run.
+ *
+ * Production builds are strict once a database is configured: an unreachable database
+ * or a failed migration exits non-zero so a broken site is not published. A missing
+ * DATABASE_URL does not fail the build. The site still publishes, and pages that need
+ * the database say they are unavailable until one is set. Set MIGRATE_STRICT=1 to fail
+ * a build that has no database. Local dev builds skip when there is no database (the
+ * PGLite fallback applies the same files at startup instead, see src/lib/db.ts).
+ */
+import { readdir, readFile } from "node:fs/promises";
+import { fileURLToPath } from "node:url";
+import { dirname, join } from "node:path";
+import pg from "pg";
+
+const databaseUrl = process.env.DATABASE_URL?.trim();
+
+// Strict = an unreachable database or a failed migration fails the build.
+//   - Vercel Production builds are always strict once DATABASE_URL is set.
+//   - Any NODE_ENV=production build is strict once DATABASE_URL is set.
+//   - MIGRATE_STRICT=1 also fails the build when DATABASE_URL is missing.
+// A missing DATABASE_URL otherwise skips, so the site can still be published.
+// Local dev builds skip when there is no database; the dev server uses PGLite.
+const vercelEnv = process.env.VERCEL_ENV;
+const strict =
+  vercelEnv === "production" ||
+  process.env.NODE_ENV === "production" ||
+  process.env.MIGRATE_STRICT === "1";
+
+if (!databaseUrl) {
+  if (process.env.MIGRATE_STRICT === "1") {
+    console.error(
+      "[migrate] DATABASE_URL is not set. MIGRATE_STRICT=1 is set, so this build stops here.",
+    );
+    process.exit(1);
+  }
+  console.log(
+    "[migrate] DATABASE_URL is not set. Skipping migrations. Pages that need the database will say they are unavailable.",
+  );
+  process.exit(0);
+}
+
+const migrationsDir = join(dirname(fileURLToPath(import.meta.url)), "..", "migrations");
+
+async function main() {
+  const pool = new pg.Pool({ connectionString: databaseUrl, max: 1, connectionTimeoutMillis: 15000 });
+  const client = await pool.connect();
+  try {
+    await client.query(
+      "CREATE TABLE IF NOT EXISTS _migrations (name TEXT PRIMARY KEY, applied_at TIMESTAMPTZ NOT NULL DEFAULT now())",
+    );
+    const applied = new Set(
+      (await client.query("SELECT name FROM _migrations")).rows.map((r) => r.name),
+    );
+
+    let files;
+    try {
+      files = (await readdir(migrationsDir)).filter((f) => f.endsWith(".sql")).sort();
+    } catch {
+      console.log("[migrate] no migrations/ directory — nothing to do.");
+      return;
+    }
+
+    let count = 0;
+    for (const name of files) {
+      if (applied.has(name)) continue;
+      const text = await readFile(join(migrationsDir, name), "utf8");
+      try {
+        await client.query("BEGIN");
+        // pg's simple-query protocol runs a whole multi-statement file at once.
+        await client.query(text);
+        await client.query("INSERT INTO _migrations (name) VALUES ($1)", [name]);
+        await client.query("COMMIT");
+      } catch (err) {
+        console.error(`[migrate] error applying ${name}`);
+        try {
+          await client.query("ROLLBACK");
+        } catch {
+          // ROLLBACK fails when the connection died — keep the original error.
+        }
+        throw err;
+      }
+      console.log(`[migrate] applied ${name}`);
+      count += 1;
+    }
+    console.log(count ? `[migrate] done — ${count} migration(s) applied.` : "[migrate] up to date.");
+  } finally {
+    client.release();
+    await pool.end();
+  }
+}
+
+main().catch((err) => {
+  console.error("[migrate] failed:", err?.message || err);
+  for (const key of ["code", "detail", "hint", "position", "where"]) {
+    if (err?.[key] != null) console.error(`[migrate]   ${key}: ${err[key]}`);
+  }
+  const code = String(err?.code ?? "");
+  const skippable = new Set([
+    "ECONNREFUSED",
+    "ENOTFOUND",
+    "ETIMEDOUT",
+    "ENETUNREACH",
+    "EAI_AGAIN",
+    "ECONNRESET",
+  ]);
+  const unreachable =
+    skippable.has(code) || /connect(ion)? (refused|timed out)|getaddrinfo/i.test(String(err?.message));
+  if (unreachable && !strict) {
+    console.error("[migrate] database unreachable from this local build. Skipping (not a production build).");
+    process.exit(0);
+  }
+  if (unreachable) {
+    console.error("[migrate] database unreachable. Failing the build so a broken site is not published.");
+  }
+  process.exit(1);
+});

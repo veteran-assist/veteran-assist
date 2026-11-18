@@ -1,0 +1,30 @@
+name: Checks
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+      # Each step shows the end of its output as an annotation on the pull request
+      # when it fails, so the reason is visible without opening the raw log.
+      - name: Install
+        run: bash scripts/ci-step.sh "npm ci" npm ci --no-audit --no-fund
+      - name: Lint
+        run: bash scripts/ci-step.sh "Lint" npm run lint
+      - name: Typecheck
+        run: bash scripts/ci-step.sh "Typecheck" npm run typecheck
+      - name: Tests
+        run: bash scripts/ci-step.sh "Tests" npm test

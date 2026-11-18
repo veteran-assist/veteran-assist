@@ -1,0 +1,208 @@
+/* Fonts are self-hosted (npm @fontsource packages, latin subset): no request to Google. */
+@import "@fontsource/barlow/latin-600.css";
+@import "@fontsource/barlow/latin-700.css";
+@import "@fontsource/barlow/latin-600-italic.css";
+@import "@fontsource/source-sans-3/latin-400.css";
+@import "@fontsource/source-sans-3/latin-500.css";
+@import "@fontsource/source-sans-3/latin-600.css";
+@import "@fontsource/source-sans-3/latin-700.css";
+@import "@fontsource/source-sans-3/latin-400-italic.css";
+@import "tailwindcss";
+@import "tw-animate-css";
+
+@theme {
+  --color-paper: #f4f7fa;
+  --color-paper-2: #e6eef5;
+  --color-paper-3: #d3deea;
+  --color-ink: #0b1f3a;
+  --color-ink-soft: #24364d;
+  --color-muted: #5a6b7d;
+  --color-subtle: #627184; /* 4.6:1 on paper, 5.0:1 on white */
+  --color-forest: #0b3d6e;
+  --color-forest-2: #082c50;
+  --color-forest-3: #1a5a96;
+  --color-gold: #cba94f; /* 4.9:1 on forest */
+  --color-gold-2: #e0c36a;
+  --color-gold-3: #f5e8bb; /* 4.8:1 on army; gold-2 is only 3.4:1 there */
+  --color-army: #5c6b32;
+  --color-navy-svc: #012169;
+  --color-raaf: #41b6e6;
+  --color-crisis: #8a2f2a;
+  --color-crisis-fg: #f8efe8;
+  --color-rule: #cdd6e0;
+  --color-rule-strong: #9aabc0;
+  --color-warn: #8a6a12;
+  --color-warn-bg: #f4e8c4;
+  --color-info-bg: #dce8f4;
+  --color-action-bg: #0b3d6e;
+
+  --color-background: var(--color-paper);
+  --color-foreground: var(--color-ink);
+  --color-card: #ffffff;
+  --color-card-foreground: var(--color-ink);
+  --color-primary: var(--color-forest);
+  --color-primary-foreground: #ffffff;
+  --color-secondary: var(--color-paper-2);
+  --color-secondary-foreground: var(--color-ink);
+  --color-muted-foreground: var(--color-muted);
+  --color-accent: var(--color-gold);
+  --color-accent-foreground: var(--color-ink);
+  --color-destructive: var(--color-crisis);
+  --color-border: var(--color-rule);
+  --color-input: var(--color-rule);
+  --color-ring: var(--color-gold);
+
+  --font-display: "Barlow", "Segoe UI", system-ui, sans-serif;
+  --font-sans: "Source Sans 3", "Segoe UI", system-ui, -apple-system, sans-serif;
+  --font-mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+
+  --radius-xs: 2px;
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 10px;
+  --radius-xl: 14px;
+  --radius: 6px;
+
+  --shadow-panel: 0 1px 0 rgba(11, 31, 58, 0.06), 0 10px 28px -16px rgba(11, 31, 58, 0.28);
+}
+
+
+/* Type scale. One size for reading text, one for notes. Use these instead of
+   one-off sizes so pages cannot drift apart. Page titles are text-4xl,
+   page intro lines text-lg, notes and captions text-sm, small caps labels text-xs. */
+@layer components {
+  .type-body {
+    font-size: 1.0625rem;
+    line-height: 1.7;
+  }
+}
+
+@layer base {
+  * {
+    border-color: var(--color-rule);
+    -webkit-tap-highlight-color: rgba(11, 61, 110, 0.18);
+  }
+
+  html {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+    background: var(--color-paper);
+    color: var(--color-ink);
+    overflow-x: hidden;
+    overflow-x: clip;
+  }
+
+  body {
+    font-family: var(--font-sans);
+    background: var(--color-paper);
+    color: var(--color-ink);
+    line-height: 1.55;
+    min-height: 100vh;
+    min-height: 100dvh;
+    overflow-x: hidden;
+    overflow-x: clip;
+    padding-left: env(safe-area-inset-left, 0px);
+    padding-right: env(safe-area-inset-right, 0px);
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior-x: none;
+  }
+
+  img,
+  video {
+    max-width: 100%;
+    height: auto;
+  }
+
+  pre {
+    max-width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  header {
+    position: -webkit-sticky;
+    position: sticky;
+  }
+
+  input,
+  select,
+  textarea {
+    font-size: 16px;
+    max-width: 100%;
+  }
+
+  input[type="date"] {
+    -webkit-appearance: none;
+    appearance: none;
+    display: block;
+    min-height: 2.75rem;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4 {
+    font-family: var(--font-display);
+    letter-spacing: 0.01em;
+    color: var(--color-ink);
+  }
+
+  button:not(:disabled),
+  [role="button"]:not(:disabled) {
+    cursor: pointer;
+    touch-action: manipulation;
+  }
+
+  a {
+    color: inherit;
+    touch-action: manipulation;
+  }
+}
+
+/* Respect the "reduce motion" setting: no animation or smooth scrolling. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+@page {
+  size: A4 portrait;
+  margin: 12mm;
+}
+
+@media print {
+  html,
+  body {
+    background: #fff !important;
+    color: #0b1f3a !important;
+  }
+
+  a[href]::after {
+    content: none !important;
+  }
+}
+
+/* Height/position fallbacks: 100vh first, then dvh/env where the engine supports them. */
+.va-dialog {
+  top: 0.75rem;
+  top: max(0.75rem, env(safe-area-inset-top, 0px));
+  max-height: 80vh;
+  max-height: min(80dvh, calc(100dvh - 1.5rem));
+}
+
+.va-sheet {
+  height: 100vh;
+  height: 100dvh;
+  max-height: 100vh;
+  max-height: 100dvh;
+  padding-top: max(1.25rem, env(safe-area-inset-top, 0px));
+  padding-bottom: max(1.25rem, env(safe-area-inset-bottom, 0px));
+}

@@ -1,0 +1,26 @@
+name: Links
+
+# Checks every external link quoted in src/. Fails only on 404 or 410.
+# Sites that refuse automated requests are listed in the run summary to check by hand.
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "17 21 * * 0" # Monday 07:17 / 08:17 Sydney time
+  pull_request:
+    paths:
+      - "src/**"
+      - "scripts/check-links.mjs"
+
+permissions:
+  contents: read
+
+jobs:
+  links:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+      - run: node scripts/check-links.mjs
